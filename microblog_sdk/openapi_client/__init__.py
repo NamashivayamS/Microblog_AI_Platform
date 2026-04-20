@@ -21,6 +21,7 @@ __version__ = "1.0.0"
 __all__ = [
     "HealthApi",
     "PostsApi",
+    "TagsApi",
     "ApiResponse",
     "ApiClient",
     "Configuration",
@@ -36,12 +37,14 @@ __all__ = [
     "LocationInner",
     "PostCreate",
     "PostResponse",
+    "TrendingTag",
     "ValidationError",
 ]
 
 # import apis into sdk package
 from openapi_client.api.health_api import HealthApi as HealthApi
 from openapi_client.api.posts_api import PostsApi as PostsApi
+from openapi_client.api.tags_api import TagsApi as TagsApi
 
 # import ApiClient
 from openapi_client.api_response import ApiResponse as ApiResponse
@@ -61,5 +64,6 @@ from openapi_client.models.like_response import LikeResponse as LikeResponse
 from openapi_client.models.location_inner import LocationInner as LocationInner
 from openapi_client.models.post_create import PostCreate as PostCreate
 from openapi_client.models.post_response import PostResponse as PostResponse
+from openapi_client.models.trending_tag import TrendingTag as TrendingTag
 from openapi_client.models.validation_error import ValidationError as ValidationError
 

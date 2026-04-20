@@ -20,7 +20,7 @@ import json
 
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr
-from typing import Any, ClassVar, Dict, List
+from typing import Any, ClassVar, Dict, List, Optional
 from typing import Optional, Set
 from typing_extensions import Self
 from pydantic_core import to_jsonable_python
@@ -34,7 +34,8 @@ class PostResponse(BaseModel):
     user_name: StrictStr
     created_at: datetime
     likes_count: StrictInt
-    __properties: ClassVar[List[str]] = ["id", "content", "user_name", "created_at", "likes_count"]
+    tags: Optional[List[StrictStr]] = None
+    __properties: ClassVar[List[str]] = ["id", "content", "user_name", "created_at", "likes_count", "tags"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -91,7 +92,8 @@ class PostResponse(BaseModel):
             "content": obj.get("content"),
             "user_name": obj.get("user_name"),
             "created_at": obj.get("created_at"),
-            "likes_count": obj.get("likes_count")
+            "likes_count": obj.get("likes_count"),
+            "tags": obj.get("tags")
         })
         return _obj
 

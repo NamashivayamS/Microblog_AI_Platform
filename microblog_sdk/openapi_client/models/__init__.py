@@ -20,5 +20,6 @@ from openapi_client.models.like_response import LikeResponse
 from openapi_client.models.location_inner import LocationInner
 from openapi_client.models.post_create import PostCreate
 from openapi_client.models.post_response import PostResponse
+from openapi_client.models.trending_tag import TrendingTag
 from openapi_client.models.validation_error import ValidationError
 

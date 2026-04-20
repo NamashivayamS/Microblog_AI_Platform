@@ -18,24 +18,19 @@ import pprint
 import re  # noqa: F401
 import json
 
-from datetime import datetime
 from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr
-from typing import Any, ClassVar, Dict, List, Optional
+from typing import Any, ClassVar, Dict, List
 from typing import Optional, Set
 from typing_extensions import Self
 from pydantic_core import to_jsonable_python
 
-class PostResponse(BaseModel):
+class TrendingTag(BaseModel):
     """
-    PostResponse
+    TrendingTag
     """ # noqa: E501
-    id: StrictInt
-    content: StrictStr
-    user_name: StrictStr
-    created_at: datetime
-    likes_count: StrictInt
-    tags: Optional[List[StrictStr]] = None
-    __properties: ClassVar[List[str]] = ["id", "content", "user_name", "created_at", "likes_count", "tags"]
+    tag: StrictStr
+    count: StrictInt
+    __properties: ClassVar[List[str]] = ["tag", "count"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -55,7 +50,7 @@ class PostResponse(BaseModel):
 
     @classmethod
     def from_json(cls, json_str: str) -> Optional[Self]:
-        """Create an instance of PostResponse from a JSON string"""
+        """Create an instance of TrendingTag from a JSON string"""
         return cls.from_dict(json.loads(json_str))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -80,7 +75,7 @@ class PostResponse(BaseModel):
 
     @classmethod
     def from_dict(cls, obj: Optional[Dict[str, Any]]) -> Optional[Self]:
-        """Create an instance of PostResponse from a dict"""
+        """Create an instance of TrendingTag from a dict"""
         if obj is None:
             return None
 
@@ -88,12 +83,8 @@ class PostResponse(BaseModel):
             return cls.model_validate(obj)
 
         _obj = cls.model_validate({
-            "id": obj.get("id"),
-            "content": obj.get("content"),
-            "user_name": obj.get("user_name"),
-            "created_at": obj.get("created_at"),
-            "likes_count": obj.get("likes_count"),
-            "tags": obj.get("tags")
+            "tag": obj.get("tag"),
+            "count": obj.get("count")
         })
         return _obj
 

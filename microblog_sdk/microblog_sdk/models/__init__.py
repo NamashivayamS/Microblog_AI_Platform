@@ -20,5 +20,6 @@ from microblog_sdk.models.like_response import LikeResponse
 from microblog_sdk.models.location_inner import LocationInner
 from microblog_sdk.models.post_create import PostCreate
 from microblog_sdk.models.post_response import PostResponse
+from microblog_sdk.models.trending_tag import TrendingTag
 from microblog_sdk.models.validation_error import ValidationError
 

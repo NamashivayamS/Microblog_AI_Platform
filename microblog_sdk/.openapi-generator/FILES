@@ -11,12 +11,15 @@ docs/LocationInner.md
 docs/PostCreate.md
 docs/PostResponse.md
 docs/PostsApi.md
+docs/TagsApi.md
+docs/TrendingTag.md
 docs/ValidationError.md
 git_push.sh
 microblog_sdk/__init__.py
 microblog_sdk/api/__init__.py
 microblog_sdk/api/health_api.py
 microblog_sdk/api/posts_api.py
+microblog_sdk/api/tags_api.py
 microblog_sdk/api_client.py
 microblog_sdk/api_response.py
 microblog_sdk/configuration.py
@@ -28,6 +31,7 @@ microblog_sdk/models/like_response.py
 microblog_sdk/models/location_inner.py
 microblog_sdk/models/post_create.py
 microblog_sdk/models/post_response.py
+microblog_sdk/models/trending_tag.py
 microblog_sdk/models/validation_error.py
 microblog_sdk/py.typed
 microblog_sdk/rest.py

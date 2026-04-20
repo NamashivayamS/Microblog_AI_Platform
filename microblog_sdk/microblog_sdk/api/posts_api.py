@@ -16,12 +16,14 @@ from pydantic import validate_call, Field, StrictFloat, StrictStr, StrictInt
 from typing import Any, Dict, List, Optional, Tuple, Union
 from typing_extensions import Annotated
 
-from pydantic import StrictInt
+from pydantic import Field, StrictInt, StrictStr
 from typing import List, Optional
+from typing_extensions import Annotated
 from microblog_sdk.models.like_request import LikeRequest
 from microblog_sdk.models.like_response import LikeResponse
 from microblog_sdk.models.post_create import PostCreate
 from microblog_sdk.models.post_response import PostResponse
+from microblog_sdk.models.trending_tag import TrendingTag
 
 from microblog_sdk.api_client import ApiClient, RequestSerialized
 from microblog_sdk.api_response import ApiResponse
@@ -60,7 +62,7 @@ class PostsApi:
     ) -> PostResponse:
         """Create a new post
 
-        Create a new microblog post. Content must be between 1 and 280 characters.
+        Create a new microblog post. Content must be 1–280 characters. Any #hashtags in the content are automatically parsed and indexed.
 
         :param post_create: (required)
         :type post_create: PostCreate
@@ -128,7 +130,7 @@ class PostsApi:
     ) -> ApiResponse[PostResponse]:
         """Create a new post
 
-        Create a new microblog post. Content must be between 1 and 280 characters.
+        Create a new microblog post. Content must be 1–280 characters. Any #hashtags in the content are automatically parsed and indexed.
 
         :param post_create: (required)
         :type post_create: PostCreate
@@ -196,7 +198,7 @@ class PostsApi:
     ) -> RESTResponseType:
         """Create a new post
 
-        Create a new microblog post. Content must be between 1 and 280 characters.
+        Create a new microblog post. Content must be 1–280 characters. Any #hashtags in the content are automatically parsed and indexed.
 
         :param post_create: (required)
         :type post_create: PostCreate
@@ -322,6 +324,8 @@ class PostsApi:
         self,
         skip: Optional[StrictInt] = None,
         limit: Optional[StrictInt] = None,
+        tag: Annotated[Optional[StrictStr], Field(description="Filter by hashtag (e.g. FastAPI)")] = None,
+        search: Annotated[Optional[StrictStr], Field(description="Search posts by content or username")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -337,12 +341,16 @@ class PostsApi:
     ) -> List[PostResponse]:
         """Get all posts
 
-        Retrieve all posts ordered by newest first, with like counts.
+        Retrieve posts ordered newest-first. Optionally filter by #hashtag via ?tag=
 
         :param skip:
         :type skip: int
         :param limit:
         :type limit: int
+        :param tag: Filter by hashtag (e.g. FastAPI)
+        :type tag: str
+        :param search: Search posts by content or username
+        :type search: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -368,6 +376,8 @@ class PostsApi:
         _param = self._get_posts_posts_get_serialize(
             skip=skip,
             limit=limit,
+            tag=tag,
+            search=search,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -394,6 +404,8 @@ class PostsApi:
         self,
         skip: Optional[StrictInt] = None,
         limit: Optional[StrictInt] = None,
+        tag: Annotated[Optional[StrictStr], Field(description="Filter by hashtag (e.g. FastAPI)")] = None,
+        search: Annotated[Optional[StrictStr], Field(description="Search posts by content or username")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -409,12 +421,16 @@ class PostsApi:
     ) -> ApiResponse[List[PostResponse]]:
         """Get all posts
 
-        Retrieve all posts ordered by newest first, with like counts.
+        Retrieve posts ordered newest-first. Optionally filter by #hashtag via ?tag=
 
         :param skip:
         :type skip: int
         :param limit:
         :type limit: int
+        :param tag: Filter by hashtag (e.g. FastAPI)
+        :type tag: str
+        :param search: Search posts by content or username
+        :type search: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -440,6 +456,8 @@ class PostsApi:
         _param = self._get_posts_posts_get_serialize(
             skip=skip,
             limit=limit,
+            tag=tag,
+            search=search,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -466,6 +484,8 @@ class PostsApi:
         self,
         skip: Optional[StrictInt] = None,
         limit: Optional[StrictInt] = None,
+        tag: Annotated[Optional[StrictStr], Field(description="Filter by hashtag (e.g. FastAPI)")] = None,
+        search: Annotated[Optional[StrictStr], Field(description="Search posts by content or username")] = None,
         _request_timeout: Union[
             None,
             Annotated[StrictFloat, Field(gt=0)],
@@ -481,12 +501,16 @@ class PostsApi:
     ) -> RESTResponseType:
         """Get all posts
 
-        Retrieve all posts ordered by newest first, with like counts.
+        Retrieve posts ordered newest-first. Optionally filter by #hashtag via ?tag=
 
         :param skip:
         :type skip: int
         :param limit:
         :type limit: int
+        :param tag: Filter by hashtag (e.g. FastAPI)
+        :type tag: str
+        :param search: Search posts by content or username
+        :type search: str
         :param _request_timeout: timeout setting for this request. If one
                                  number provided, it will be total request
                                  timeout. It can also be a pair (tuple) of
@@ -512,6 +536,8 @@ class PostsApi:
         _param = self._get_posts_posts_get_serialize(
             skip=skip,
             limit=limit,
+            tag=tag,
+            search=search,
             _request_auth=_request_auth,
             _content_type=_content_type,
             _headers=_headers,
@@ -533,6 +559,8 @@ class PostsApi:
         self,
         skip,
         limit,
+        tag,
+        search,
         _request_auth,
         _content_type,
         _headers,
@@ -562,6 +590,14 @@ class PostsApi:
         if limit is not None:
             
             _query_params.append(('limit', limit))
+            
+        if tag is not None:
+            
+            _query_params.append(('tag', tag))
+            
+        if search is not None:
+            
+            _query_params.append(('search', search))
             
         # process the header parameters
         # process the form parameters
@@ -875,6 +911,271 @@ class PostsApi:
         return self.api_client.param_serialize(
             method='POST',
             resource_path='/posts/{post_id}/like',
+            path_params=_path_params,
+            query_params=_query_params,
+            header_params=_header_params,
+            body=_body_params,
+            post_params=_form_params,
+            files=_files,
+            auth_settings=_auth_settings,
+            collection_formats=_collection_formats,
+            _host=_host,
+            _request_auth=_request_auth
+        )
+
+
+
+
+    @validate_call
+    def trending_tags_posts_trending_tags_get(
+        self,
+        limit: Optional[StrictInt] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> List[TrendingTag]:
+        """Get trending hashtags
+
+        Returns the most used hashtags from the 100 most recent posts.
+
+        :param limit:
+        :type limit: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._trending_tags_posts_trending_tags_get_serialize(
+            limit=limit,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[TrendingTag]",
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        ).data
+
+
+    @validate_call
+    def trending_tags_posts_trending_tags_get_with_http_info(
+        self,
+        limit: Optional[StrictInt] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> ApiResponse[List[TrendingTag]]:
+        """Get trending hashtags
+
+        Returns the most used hashtags from the 100 most recent posts.
+
+        :param limit:
+        :type limit: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._trending_tags_posts_trending_tags_get_serialize(
+            limit=limit,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[TrendingTag]",
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        response_data.read()
+        return self.api_client.response_deserialize(
+            response_data=response_data,
+            response_types_map=_response_types_map,
+        )
+
+
+    @validate_call
+    def trending_tags_posts_trending_tags_get_without_preload_content(
+        self,
+        limit: Optional[StrictInt] = None,
+        _request_timeout: Union[
+            None,
+            Annotated[StrictFloat, Field(gt=0)],
+            Tuple[
+                Annotated[StrictFloat, Field(gt=0)],
+                Annotated[StrictFloat, Field(gt=0)]
+            ]
+        ] = None,
+        _request_auth: Optional[Dict[StrictStr, Any]] = None,
+        _content_type: Optional[StrictStr] = None,
+        _headers: Optional[Dict[StrictStr, Any]] = None,
+        _host_index: Annotated[StrictInt, Field(ge=0, le=0)] = 0,
+    ) -> RESTResponseType:
+        """Get trending hashtags
+
+        Returns the most used hashtags from the 100 most recent posts.
+
+        :param limit:
+        :type limit: int
+        :param _request_timeout: timeout setting for this request. If one
+                                 number provided, it will be total request
+                                 timeout. It can also be a pair (tuple) of
+                                 (connection, read) timeouts.
+        :type _request_timeout: int, tuple(int, int), optional
+        :param _request_auth: set to override the auth_settings for an a single
+                              request; this effectively ignores the
+                              authentication in the spec for a single request.
+        :type _request_auth: dict, optional
+        :param _content_type: force content-type for the request.
+        :type _content_type: str, Optional
+        :param _headers: set to override the headers for a single
+                         request; this effectively ignores the headers
+                         in the spec for a single request.
+        :type _headers: dict, optional
+        :param _host_index: set to override the host_index for a single
+                            request; this effectively ignores the host_index
+                            in the spec for a single request.
+        :type _host_index: int, optional
+        :return: Returns the result object.
+        """ # noqa: E501
+
+        _param = self._trending_tags_posts_trending_tags_get_serialize(
+            limit=limit,
+            _request_auth=_request_auth,
+            _content_type=_content_type,
+            _headers=_headers,
+            _host_index=_host_index
+        )
+
+        _response_types_map: Dict[str, Optional[str]] = {
+            '200': "List[TrendingTag]",
+            '422': "HTTPValidationError",
+        }
+        response_data = self.api_client.call_api(
+            *_param,
+            _request_timeout=_request_timeout
+        )
+        return response_data.response
+
+
+    def _trending_tags_posts_trending_tags_get_serialize(
+        self,
+        limit,
+        _request_auth,
+        _content_type,
+        _headers,
+        _host_index,
+    ) -> RequestSerialized:
+
+        _host = None
+
+        _collection_formats: Dict[str, str] = {
+        }
+
+        _path_params: Dict[str, str] = {}
+        _query_params: List[Tuple[str, str]] = []
+        _header_params: Dict[str, Optional[str]] = _headers or {}
+        _form_params: List[Tuple[str, str]] = []
+        _files: Dict[
+            str, Union[str, bytes, List[str], List[bytes], List[Tuple[str, bytes]]]
+        ] = {}
+        _body_params: Optional[bytes] = None
+
+        # process the path parameters
+        # process the query parameters
+        if limit is not None:
+            
+            _query_params.append(('limit', limit))
+            
+        # process the header parameters
+        # process the form parameters
+        # process the body parameter
+
+
+        # set the HTTP header `Accept`
+        if 'Accept' not in _header_params:
+            _header_params['Accept'] = self.api_client.select_header_accept(
+                [
+                    'application/json'
+                ]
+            )
+
+
+        # authentication setting
+        _auth_settings: List[str] = [
+        ]
+
+        return self.api_client.param_serialize(
+            method='GET',
+            resource_path='/posts/trending-tags',
             path_params=_path_params,
             query_params=_query_params,
             header_params=_header_params,

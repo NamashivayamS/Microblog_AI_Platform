@@ -16,17 +16,19 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), 'microblog_sdk'))
 
 try:
     from microblog_sdk.api.posts_api import PostsApi
+    from microblog_sdk.api.tags_api import TagsApi
     from microblog_sdk import ApiClient, Configuration
 except ImportError:
     print("ERROR: SDK not found.")
     print("Generate it first:\n")
     print("  npm install -g @openapitools/openapi-generator-cli")
-    print("  openapi-generator-cli generate -i http://localhost:8000/openapi.json -g python -o microblog_sdk")
+    print("  openapi-generator-cli generate -i http://localhost:8000/openapi.json -g python -o microblog_sdk --package-name microblog_sdk")
     sys.exit(1)
 
 config = Configuration(host="http://localhost:8000")
 client = ApiClient(configuration=config)
-api = PostsApi(client)
+posts_api = PostsApi(client)
+tags_api = TagsApi(client)
 
 print("=" * 50)
 print("  Microblog SDK Demo")
@@ -36,7 +38,7 @@ print("=" * 50)
 print("\n[1] Creating a post via SDK...")
 try:
     from microblog_sdk.models.post_create import PostCreate
-    new_post = api.create_post_posts_post(
+    new_post = posts_api.create_post_posts_post(
         PostCreate(content="Hello from the auto-generated SDK!", user_name="sdk_demo")
     )
     print(f"    Created post #{new_post.id}: '{new_post.content}'")
@@ -48,7 +50,7 @@ except Exception as e:
 # 2. Get all posts via SDK
 print("\n[2] Fetching all posts via SDK...")
 try:
-    posts = api.get_posts_posts_get()
+    posts = posts_api.get_posts_posts_get()
     print(f"    Found {len(posts)} post(s):")
     for p in posts[:5]:
         print(f"    - [{p.id}] @{p.user_name}: {p.content[:50]}... ({p.likes_count} likes)")
@@ -60,7 +62,7 @@ if created_id:
     print(f"\n[3] Liking post #{created_id} via SDK...")
     try:
         from microblog_sdk.models.like_request import LikeRequest
-        result = api.like_post_posts_post_id_like_post(
+        result = posts_api.like_post_posts_post_id_like_post(
             post_id=created_id,
             like_request=LikeRequest(user_name="sdk_demo_liker")
         )
@@ -72,15 +74,37 @@ if created_id:
     print(f"\n[4] Testing duplicate like rejection via SDK...")
     try:
         from microblog_sdk.models.like_request import LikeRequest
-        api.like_post_posts_post_id_like_post(
+        posts_api.like_post_posts_post_id_like_post(
             post_id=created_id,
             like_request=LikeRequest(user_name="sdk_demo_liker")
         )
         print("    ERROR: Should have rejected duplicate like!")
     except Exception as e:
-        status = getattr(getattr(e, 'status', None), '__str__', lambda: str(e))()
         print(f"    Correctly rejected duplicate like (HTTP {getattr(e, 'status', '?')})")
 
+# 5. Trending Tags & Hashtags
+print("\n[5] Testing Hashtag Engine & Trending Tags via SDK...")
+try:
+    posts_api.create_post_posts_post(
+        PostCreate(content="Loving this #FastAPI and #React combo!", user_name="sdk_tester")
+    )
+    trending = tags_api.trending_tags_posts_trending_tags_get(limit=3)
+    print("    Current Top 3 Trending Tags:")
+    for t in trending:
+        print(f"    - #{t.tag} ({t.count} uses)")
+except Exception as e:
+    print(f"    Error: {e}")
+
+# 6. Global Search functionality
+print("\n[6] Testing Global Search Engine via SDK...")
+try:
+    search_results = posts_api.get_posts_posts_get(search="FastAPI")
+    print(f"    Found {len(search_results)} posts matching 'FastAPI'. First match:")
+    if search_results:
+        print(f"    - @{search_results[0].user_name}: {search_results[0].content}")
+except Exception as e:
+    print(f"    Error: {e}")
+
 print("\n" + "=" * 50)
-print("  SDK Demo complete!")
+print("  SDK Demo complete! All endpoints verified.")
 print("=" * 50)

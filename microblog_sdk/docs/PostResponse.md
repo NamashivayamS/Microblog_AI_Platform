@@ -10,6 +10,7 @@ Name | Type | Description | Notes
 **user_name** | **str** |  | 
 **created_at** | **datetime** |  | 
 **likes_count** | **int** |  | 
+**tags** | **List[str]** |  | [optional] [default to []]
 
 ## Example
 

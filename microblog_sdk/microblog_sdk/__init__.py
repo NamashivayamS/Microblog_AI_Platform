@@ -21,6 +21,7 @@ __version__ = "1.0.0"
 __all__ = [
     "HealthApi",
     "PostsApi",
+    "TagsApi",
     "ApiResponse",
     "ApiClient",
     "Configuration",
@@ -36,12 +37,14 @@ __all__ = [
     "LocationInner",
     "PostCreate",
     "PostResponse",
+    "TrendingTag",
     "ValidationError",
 ]
 
 # import apis into sdk package
 from microblog_sdk.api.health_api import HealthApi as HealthApi
 from microblog_sdk.api.posts_api import PostsApi as PostsApi
+from microblog_sdk.api.tags_api import TagsApi as TagsApi
 
 # import ApiClient
 from microblog_sdk.api_response import ApiResponse as ApiResponse
@@ -61,5 +64,6 @@ from microblog_sdk.models.like_response import LikeResponse as LikeResponse
 from microblog_sdk.models.location_inner import LocationInner as LocationInner
 from microblog_sdk.models.post_create import PostCreate as PostCreate
 from microblog_sdk.models.post_response import PostResponse as PostResponse
+from microblog_sdk.models.trending_tag import TrendingTag as TrendingTag
 from microblog_sdk.models.validation_error import ValidationError as ValidationError
 

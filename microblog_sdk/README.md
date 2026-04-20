@@ -89,6 +89,8 @@ Class | Method | HTTP request | Description
 *PostsApi* | [**create_post_posts_post**](docs/PostsApi.md#create_post_posts_post) | **POST** /posts/ | Create a new post
 *PostsApi* | [**get_posts_posts_get**](docs/PostsApi.md#get_posts_posts_get) | **GET** /posts/ | Get all posts
 *PostsApi* | [**like_post_posts_post_id_like_post**](docs/PostsApi.md#like_post_posts_post_id_like_post) | **POST** /posts/{post_id}/like | Like a post
+*PostsApi* | [**trending_tags_posts_trending_tags_get**](docs/PostsApi.md#trending_tags_posts_trending_tags_get) | **GET** /posts/trending-tags | Get trending hashtags
+*TagsApi* | [**trending_tags_posts_trending_tags_get**](docs/TagsApi.md#trending_tags_posts_trending_tags_get) | **GET** /posts/trending-tags | Get trending hashtags
 
 
 ## Documentation For Models
@@ -99,6 +101,7 @@ Class | Method | HTTP request | Description
  - [LocationInner](docs/LocationInner.md)
  - [PostCreate](docs/PostCreate.md)
  - [PostResponse](docs/PostResponse.md)
+ - [TrendingTag](docs/TrendingTag.md)
  - [ValidationError](docs/ValidationError.md)
 
 
