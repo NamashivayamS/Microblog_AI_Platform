@@ -1,6 +1,9 @@
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from rate_limiter import limiter
 from routers import posts
 from database import engine
 import models
@@ -12,7 +15,8 @@ app = FastAPI(
     title="Social Media Microblog API",
     description=(
         "A Twitter-like microblog API built with FastAPI and SQLite. "
-        "Supports creating posts (max 280 chars) and liking posts (once per user)."
+        "Supports creating posts (max 280 chars) and liking posts (once per user). "
+        "Includes real-time SSE feed, ETag conditional caching, and per-IP rate limiting."
     ),
     version="1.0.0",
     contact={
@@ -21,12 +25,18 @@ app = FastAPI(
     }
 )
 
+# Attach limiter to app state so @limiter.limit decorators can find it
+app.state.limiter = limiter
+
+# Register the 429 handler — returns clean JSON instead of an HTML page
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:3000", "http://127.0.0.1:3000"],
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*", "ETag", "If-None-Match"],
 )
 
 
@@ -38,6 +48,8 @@ async def global_exception_handler(request: Request, exc: Exception):
     )
 
 
+# Pass limiter into posts router so it can decorate endpoints
+posts.router.limiter = limiter
 app.include_router(posts.router)
 
 

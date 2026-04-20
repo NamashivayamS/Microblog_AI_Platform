@@ -9,6 +9,9 @@ import crud
 
 router = APIRouter(prefix="/posts", tags=["posts"])
 
+# Import the single shared limiter — avoids circular imports
+from rate_limiter import limiter
+
 
 @router.post(
     "/",
@@ -20,7 +23,9 @@ router = APIRouter(prefix="/posts", tags=["posts"])
         "Any #hashtags in the content are automatically parsed and indexed."
     ),
 )
+@limiter.limit("10/minute", error_message="Too many posts. You can create up to 10 posts per minute.")
 def create_post(
+    request: Request,
     post: PostCreate,
     background_tasks: BackgroundTasks,
     db: Session = Depends(get_db),
@@ -37,6 +42,7 @@ def create_post(
     summary="Get all posts",
     description="Retrieve posts ordered newest-first. Supports ETag conditional caching, hashtag filtering, and full-text search.",
 )
+@limiter.limit("60/minute", error_message="Too many requests. Slow down.")
 def get_posts(
     request: Request,
     response: Response,
@@ -64,7 +70,9 @@ def get_posts(
     summary="Like a post",
     description="Like a post. Each user can only like a post once. Returns 409 on duplicate.",
 )
+@limiter.limit("30/minute", error_message="Too many like requests. Max 30 per minute per IP.")
 def like_post(
+    request: Request,
     post_id: int,
     like: LikeRequest,
     background_tasks: BackgroundTasks,

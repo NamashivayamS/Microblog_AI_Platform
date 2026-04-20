@@ -23,13 +23,10 @@ async def notify_clients():
 
 def generate_state_hash(db: Session) -> str:
     """Calculates an ETag representing global logical feed state."""
-    # A fast aggregation to check if state changed without full query
-    res = db.query(
-        func.max(MicroPost.id).label("max_id"),
-        func.count(MicroPost.id).label("total_posts"),
-        func.count(Like.id).label("total_likes")
-    ).first()
-    raw = f"{res.max_id}-{res.total_posts}-{res.total_likes}"
+    max_id = db.query(func.max(MicroPost.id)).scalar() or 0
+    total_posts = db.query(func.count(MicroPost.id)).scalar() or 0
+    total_likes = db.query(func.count(Like.id)).scalar() or 0
+    raw = f"{max_id}-{total_posts}-{total_likes}"
     return hashlib.md5(raw.encode()).hexdigest()
 
 # ── Internal helpers ─────────────────────────────────────────
