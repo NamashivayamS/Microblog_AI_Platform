@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { likePost } from '../api';
 import { Avatar } from '../App';
 
@@ -11,6 +11,16 @@ function timeAgo(dateStr) {
   if (diff < 86400)  return `${Math.floor(diff / 3600)}h`;
   if (diff < 604800) return `${Math.floor(diff / 86400)}d`;
   return then.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
+function LiveTimeAgo({ dateStr }) {
+  const [, setTick] = useState(0);
+  useEffect(() => {
+    // Re-render every 15 seconds to keep relative time accurate without fetching
+    const timer = setInterval(() => setTick(t => t + 1), 15000);
+    return () => clearInterval(timer);
+  }, []);
+  return <span className="post-timestamp">{timeAgo(dateStr)}</span>;
 }
 
 // Render post content with clickable #hashtags
@@ -84,7 +94,7 @@ export default function PostCard({ post, userName, alreadyLiked, onLiked, onTagC
           <span className="post-display-name">{displayName}</span>
           <span className="post-handle">@{post.user_name}</span>
           <span className="post-dot">·</span>
-          <span className="post-timestamp">{timeAgo(post.created_at)}</span>
+          <LiveTimeAgo dateStr={post.created_at} />
         </div>
 
         {/* Content with clickable hashtags */}

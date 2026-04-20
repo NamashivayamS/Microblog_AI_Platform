@@ -32,9 +32,10 @@ def get_posts(
     skip: int = 0,
     limit: int = 100,
     tag: Optional[str] = Query(default=None, description="Filter by hashtag (e.g. FastAPI)"),
+    search: Optional[str] = Query(default=None, description="Search posts by content or username"),
     db: Session = Depends(get_db),
 ):
-    return crud.get_posts(db=db, skip=skip, limit=limit, tag=tag)
+    return crud.get_posts(db=db, skip=skip, limit=limit, tag=tag, search=search)
 
 
 @router.post(

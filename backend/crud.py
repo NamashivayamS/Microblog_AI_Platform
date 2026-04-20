@@ -1,8 +1,9 @@
 import re
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc, or_
 from fastapi import HTTPException
+from cachetools import cached, TTLCache
 from models import MicroPost, Like, PostHashtag
 from schemas import PostCreate, LikeRequest
 
@@ -48,13 +49,22 @@ def create_post(db: Session, post: PostCreate) -> dict:
     return _post_to_dict(db, db_post)
 
 
-def get_posts(db: Session, skip: int = 0, limit: int = 100, tag: str | None = None) -> list[dict]:
+def get_posts(db: Session, skip: int = 0, limit: int = 100, tag: str | None = None, search: str | None = None) -> list[dict]:
     query = db.query(MicroPost)
 
     if tag:
         # Filter: only posts that have this hashtag
         clean_tag = tag.lstrip('#').lower()
         query = query.join(PostHashtag).filter(PostHashtag.tag == clean_tag)
+
+    if search:
+        search_term = f"%{search}%"
+        query = query.filter(
+            or_(
+                MicroPost.content.ilike(search_term),
+                MicroPost.user_name.ilike(search_term)
+            )
+        )
 
     posts = query.order_by(MicroPost.id.desc()).offset(skip).limit(limit).all()
     return [_post_to_dict(db, p) for p in posts]
@@ -91,6 +101,8 @@ def like_post(db: Session, post_id: int, like: LikeRequest) -> dict:
     return {"message": "Post liked successfully", "total_likes": total_likes}
 
 
+# Cache trending tags for 5 seconds to prevent DB overload. Key on limit to ignore the DB session.
+@cached(cache=TTLCache(maxsize=1, ttl=5), key=lambda db, limit=10: limit)
 def get_trending_tags(db: Session, limit: int = 10) -> list[dict]:
     """
     Return the most used hashtags across the 100 most recent posts.

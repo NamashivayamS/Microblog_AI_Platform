@@ -5,8 +5,12 @@ const API = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-export const getPosts    = (tag = null) =>
-  API.get('/posts/', { params: tag ? { tag } : {} });
+export const getPosts    = (tag = null, search = null) => {
+  const params = {};
+  if (tag) params.tag = tag;
+  if (search) params.search = search;
+  return API.get('/posts/', { params });
+};
 
 export const createPost  = (content, userName) =>
   API.post('/posts/', { content, user_name: userName });

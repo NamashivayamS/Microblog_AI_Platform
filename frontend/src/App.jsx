@@ -207,7 +207,7 @@ function ComposeBox({ userName, onPostCreated, liveTags }) {
 }
 
 /* ── Left Navigation ──────────────────────────────────────── */
-function LeftNav({ userName, onUserNameChange }) {
+function LeftNav({ userName, onUserNameChange, activeTab, onNavClick }) {
   return (
     <nav className="left-nav">
       <div className="nav-logo">
@@ -220,14 +220,18 @@ function LeftNav({ userName, onUserNameChange }) {
       </div>
       <div className="nav-items">
         {[
-          { icon: '🏠', label: 'Home',         active: true  },
-          { icon: '🔍', label: 'Explore',       active: false },
-          { icon: '🔔', label: 'Notifications', active: false },
-          { icon: '✉️', label: 'Messages',      active: false },
-          { icon: '🔖', label: 'Bookmarks',     active: false },
-          { icon: '👤', label: 'Profile',       active: false },
-        ].map(({ icon, label, active }) => (
-          <div key={label} className={`nav-item${active ? ' active' : ''}`}>
+          { icon: '🏠', label: 'Home',         id: 'home'  },
+          { icon: '🔍', label: 'Explore',       id: 'explore' },
+          { icon: '🔔', label: 'Notifications', id: 'notifications' },
+          { icon: '✉️', label: 'Messages',      id: 'messages' },
+          { icon: '🔖', label: 'Bookmarks',     id: 'bookmarks' },
+          { icon: '👤', label: 'Profile',       id: 'profile' },
+        ].map(({ icon, label, id }) => (
+          <div
+            key={label}
+            className={`nav-item${activeTab === id ? ' active' : ''}`}
+            onClick={() => onNavClick(id)}
+          >
             <span className="nav-item-icon">{icon}</span>
             <span className="nav-item-label">{label}</span>
           </div>
@@ -253,8 +257,23 @@ function LeftNav({ userName, onUserNameChange }) {
   );
 }
 
+
 /* ── Right Sidebar ────────────────────────────────────────── */
-function RightAside({ posts, trending, activeTag, onTagClick }) {
+function useDebounce(value, delay) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+    return () => clearTimeout(handler);
+  }, [value, delay]);
+  return debouncedValue;
+}
+
+function RightAside({ posts, trending, activeTag, onTagClick, searchQuery, onSearch }) {
+  const [localSearch, setLocalSearch] = useState(searchQuery || '');
+  const debouncedSearch = useDebounce(localSearch, 300);
+
   const totalLikes   = posts.reduce((s, p) => s + p.likes_count, 0);
   const totalAuthors = new Set(posts.map(p => p.user_name)).size;
 
@@ -264,12 +283,30 @@ function RightAside({ posts, trending, activeTag, onTagClick }) {
     { name: 'Aumne AI', handle: 'aumne_ai' },
   ];
 
+  // Sync local search when global search clears externally
+  useEffect(() => {
+    if (searchQuery === null) setLocalSearch('');
+    else if (searchQuery !== debouncedSearch) setLocalSearch(searchQuery);
+  }, [searchQuery]); // intentionally ignoring debouncedSearch here to prevent loops
+
+  // Trigger search when debounced value changes
+  useEffect(() => {
+    if (debouncedSearch.trim() !== (searchQuery || '')) {
+      onSearch(debouncedSearch.trim());
+    }
+  }, [debouncedSearch, onSearch, searchQuery]);
+
   return (
     <aside className="right-aside">
       {/* Search */}
       <div className="search-box">
         <span className="search-icon">🔍</span>
-        <input className="search-input" placeholder="Search microblog" />
+        <input
+          className="search-input"
+          placeholder="Search microblog"
+          value={localSearch}
+          onChange={(e) => setLocalSearch(e.target.value)}
+        />
       </div>
 
       {/* Active filter banner */}
@@ -354,6 +391,9 @@ export default function App() {
   const [loading, setLoading]     = useState(true);
   const [error, setError]         = useState('');
   const [activeTag, setActiveTag] = useState(null);   // null = show all
+  const [searchQuery, setSearchQuery] = useState(null);
+  const [activeTab, setActiveTab] = useState('home');
+  const [toastMessage, setToastMessage] = useState('');
   const [userName, setUserName]   = useState(
     () => localStorage.getItem('mb_username') || ''
   );
@@ -362,10 +402,10 @@ export default function App() {
     catch { return []; }
   });
 
-  const fetchPosts = useCallback(async (tag = activeTag) => {
+  const fetchPosts = useCallback(async (tag = activeTag, search = searchQuery) => {
     try {
       const [postsRes, trendRes] = await Promise.all([
-        getPosts(tag),
+        getPosts(tag, search),
         getTrending(10),
       ]);
       setPosts(postsRes.data);
@@ -376,16 +416,50 @@ export default function App() {
     } finally {
       setLoading(false);
     }
-  }, [activeTag]);
+  }, [activeTag, searchQuery]);
 
   useEffect(() => {
-    fetchPosts(activeTag);
-    const id = setInterval(() => fetchPosts(activeTag), 5000);
+    fetchPosts(activeTag, searchQuery);
+    const id = setInterval(() => fetchPosts(activeTag, searchQuery), 5000);
     return () => clearInterval(id);
-  }, [fetchPosts, activeTag]);
+  }, [fetchPosts, activeTag, searchQuery]);
 
   const handleTagClick = (tag) => {
     setActiveTag(tag);
+    setSearchQuery(null);
+    setActiveTab('home');
+    setLoading(true);
+  };
+
+  const showToast = (message) => {
+    setToastMessage(message);
+    setTimeout(() => setToastMessage(''), 3000);
+  };
+
+  const handleNavClick = (id) => {
+    setActiveTab(id);
+    if (id === 'home') {
+      setActiveTag(null);
+      setSearchQuery(null);
+      setLoading(true);
+    } else if (id === 'profile') {
+      if (!userName.trim()) {
+        showToast('Set your handle first to view profile!');
+        setActiveTab('home');
+        return;
+      }
+      setActiveTag(null);
+      setSearchQuery(userName.trim());
+      setLoading(true);
+    } else {
+      showToast('This feature will be available in the next release! 🚀');
+      setTimeout(() => setActiveTab('home'), 500); // Revert selection
+    }
+  };
+
+  const handleSearch = (query) => {
+    setSearchQuery(query || null);
+    setActiveTag(null);
     setLoading(true);
   };
 
@@ -398,24 +472,36 @@ export default function App() {
     const updated = [...likedPosts, postId];
     setLikedPosts(updated);
     localStorage.setItem('mb_liked', JSON.stringify(updated));
-    fetchPosts(activeTag);
+    fetchPosts(activeTag, searchQuery);
   };
 
   return (
     <div className="app-shell">
-      <LeftNav userName={userName} onUserNameChange={handleUserNameChange} />
+      {/* Toast Notification */}
+      {toastMessage && (
+        <div className="global-toast">
+          {toastMessage}
+        </div>
+      )}
+
+      <LeftNav
+        userName={userName}
+        onUserNameChange={handleUserNameChange}
+        activeTab={activeTab}
+        onNavClick={handleNavClick}
+      />
 
       <main className="main-feed">
         {/* Header */}
         <header className="feed-header">
           <span className="feed-header-title">
-            {activeTag ? `#${activeTag}` : 'For You'}
+            {activeTag ? `#${activeTag}` : searchQuery ? `Search: ${searchQuery}` : 'For You'}
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {activeTag && (
+            {(activeTag || searchQuery) && (
               <button
                 className="clear-filter-pill"
-                onClick={() => handleTagClick(null)}
+                onClick={() => { setActiveTag(null); setSearchQuery(null); setLoading(true); }}
               >
                 ✕ Clear filter
               </button>
@@ -430,7 +516,7 @@ export default function App() {
         {/* Compose */}
         <ComposeBox
           userName={userName}
-          onPostCreated={() => fetchPosts(activeTag)}
+          onPostCreated={() => fetchPosts(activeTag, searchQuery)}
           liveTags={trending}
         />
 
@@ -467,7 +553,10 @@ export default function App() {
         trending={trending}
         activeTag={activeTag}
         onTagClick={handleTagClick}
+        searchQuery={searchQuery}
+        onSearch={handleSearch}
       />
     </div>
   );
 }
+
