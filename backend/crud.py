@@ -1,4 +1,6 @@
 import re
+import asyncio
+import hashlib
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func, desc, or_
@@ -7,6 +9,28 @@ from cachetools import cached, TTLCache
 from models import MicroPost, Like, PostHashtag
 from schemas import PostCreate, LikeRequest
 
+
+# ── Real-Time SSE Infrastructure ─────────────────────────────
+SSE_CLIENTS = []
+
+async def notify_clients():
+    """To be called via BackgroundTasks when a mutation happens."""
+    for q in SSE_CLIENTS:
+        try:
+            q.put_nowait("update")
+        except asyncio.QueueFull:
+            pass
+
+def generate_state_hash(db: Session) -> str:
+    """Calculates an ETag representing global logical feed state."""
+    # A fast aggregation to check if state changed without full query
+    res = db.query(
+        func.max(MicroPost.id).label("max_id"),
+        func.count(MicroPost.id).label("total_posts"),
+        func.count(Like.id).label("total_likes")
+    ).first()
+    raw = f"{res.max_id}-{res.total_posts}-{res.total_likes}"
+    return hashlib.md5(raw.encode()).hexdigest()
 
 # ── Internal helpers ─────────────────────────────────────────
 

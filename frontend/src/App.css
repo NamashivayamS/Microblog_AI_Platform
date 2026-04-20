@@ -1229,3 +1229,14 @@ body {
   from { opacity: 1; }
   to   { opacity: 0; }
 }
+
+/* SSE connection state override */
+.live-pill-offline {
+  background: rgba(113, 118, 123, 0.15);
+  color: #71767b;
+  border-color: #71767b;
+}
+.live-pill-offline .live-dot {
+  background: #71767b;
+  animation: none;
+}

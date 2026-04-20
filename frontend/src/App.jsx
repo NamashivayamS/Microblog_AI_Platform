@@ -394,6 +394,7 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState(null);
   const [activeTab, setActiveTab] = useState('home');
   const [toastMessage, setToastMessage] = useState('');
+  const [sseConnected, setSseConnected] = useState(false);
   const [userName, setUserName]   = useState(
     () => localStorage.getItem('mb_username') || ''
   );
@@ -418,10 +419,25 @@ export default function App() {
     }
   }, [activeTag, searchQuery]);
 
+  // ── True Real-Time: Server-Sent Events ────────────────────
+  // Replaces the naive 5-second polling with a push-based architecture.
+  // The server sends a "refresh" signal only when data actually changes.
   useEffect(() => {
     fetchPosts(activeTag, searchQuery);
-    const id = setInterval(() => fetchPosts(activeTag, searchQuery), 5000);
-    return () => clearInterval(id);
+
+    const es = new EventSource('http://localhost:8000/posts/stream');
+    es.onopen = () => setSseConnected(true);
+    es.onmessage = (e) => {
+      if (e.data === 'update') {
+        fetchPosts(activeTag, searchQuery);
+      }
+    };
+    es.onerror = () => {
+      setSseConnected(false);
+      // SSE connection lost — fall back gracefully
+      es.close();
+    };
+    return () => { es.close(); setSseConnected(false); };
   }, [fetchPosts, activeTag, searchQuery]);
 
   const handleTagClick = (tag) => {
@@ -506,9 +522,9 @@ export default function App() {
                 ✕ Clear filter
               </button>
             )}
-            <div className="live-pill">
+            <div className={`live-pill${sseConnected ? '' : ' live-pill-offline'}`}>
               <span className="live-dot" />
-              Live
+              {sseConnected ? 'Live' : 'Connecting…'}
             </div>
           </div>
         </header>
