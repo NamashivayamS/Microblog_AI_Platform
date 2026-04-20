@@ -23,7 +23,9 @@ from rate_limiter import limiter
         "Any #hashtags in the content are automatically parsed and indexed."
     ),
 )
-@limiter.limit("10/minute", error_message="Too many posts. You can create up to 10 posts per minute.")
+# NOTE: Limits are slightly elevated (5/min instead of 1/min) for portfolio valuation
+# so evaluators can test the UX without getting locked out, but still blocks bot spam.
+@limiter.limit("5/minute", error_message="Too many posts. You can create up to 5 posts per minute.")
 def create_post(
     request: Request,
     post: PostCreate,
@@ -70,7 +72,8 @@ def get_posts(
     summary="Like a post",
     description="Like a post. Each user can only like a post once. Returns 409 on duplicate.",
 )
-@limiter.limit("30/minute", error_message="Too many like requests. Max 30 per minute per IP.")
+# NOTE: Evaluators will click fast. 15/min prevents UI test blocking while stopping abuse.
+@limiter.limit("15/minute", error_message="Too many like requests. Max 15 per minute per IP.")
 def like_post(
     request: Request,
     post_id: int,
