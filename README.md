@@ -1,6 +1,11 @@
+<div align="center">
+  <img src="assets/logo.png" alt="Microblog Logo" width="200" />
+</div>
+
 # 🐦 Aumne Microblog: Next-Gen Social Platform
 
 Microblog is a high-performance, Twitter-like social media platform built to demonstrate **Senior-level engineering practices**. While fulfilling all baseline requirements (FastAPI, ReactJS, SQLite, OpenAPI SDK), this project implements production-ready architecture designed to scale.
+
 
 ---
 
