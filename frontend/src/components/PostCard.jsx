@@ -78,16 +78,18 @@ export default function PostCard({ post, userName, alreadyLiked, onLiked, onTagC
     }
   };
 
-  const displayName = post.user_name
-    ? post.user_name.charAt(0).toUpperCase() + post.user_name.slice(1)
-    : 'Anonymous';
+  const displayName = post.author_name 
+    ? post.author_name 
+    : post.user_name
+      ? post.user_name.charAt(0).toUpperCase() + post.user_name.slice(1)
+      : 'Anonymous';
 
   // Simulated view count (deterministic from post id)
   const views = post.id * 47 + 12;
 
   return (
     <article className="post-card">
-      <Avatar name={post.user_name} size={40} />
+      <Avatar name={displayName} size={40} />
       <div className="post-right">
         {/* Header */}
         <div className="post-header">

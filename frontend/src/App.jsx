@@ -2,8 +2,96 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import PostList from './components/PostList';
 import EngagementChart from './components/EngagementChart';
 import HashtagDropdown from './components/HashtagDropdown';
-import { getPosts, getTrending } from './api';
+import { getPosts, getTrending, loginUser, registerUser } from './api';
 import './App.css';
+
+/* ── Auth Screen Component ────────────────────────────────── */
+function AuthScreen({ onLoginSuccess }) {
+  const [isLogin, setIsLogin] = useState(true);
+  const [name, setName] = useState('');
+  const [username, setUsername] = useState('');
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+    setLoading(true);
+
+    try {
+      if (isLogin) {
+        const response = await loginUser(username, password);
+        onLoginSuccess(response.data);
+      } else {
+        await registerUser(name, username, password);
+        const response = await loginUser(username, password);
+        onLoginSuccess(response.data);
+      }
+    } catch (err) {
+      if (err.response?.data?.detail) {
+        let msg = err.response.data.detail;
+        if (Array.isArray(msg)) msg = msg[0].msg;
+        setError(msg);
+      } else {
+        setError('Connection failed. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="auth-container">
+      <div className="auth-box">
+        <img src="/logo.png" alt="Microblog Logo" className="auth-logo" style={{ borderRadius: '50%', objectFit: 'cover' }} />
+        <h1 className="auth-title">Happening now</h1>
+        <p className="auth-subtitle">Join Microblog today.</p>
+
+        {error && <div className="auth-error">{error}</div>}
+
+        <form className="auth-form" onSubmit={handleSubmit}>
+          {!isLogin && (
+            <input
+              type="text"
+              className="auth-input"
+              placeholder="Full Name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+          )}
+          <input
+            type="text"
+            className="auth-input"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required
+          />
+          <input
+            type="password"
+            className="auth-input"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
+          <button type="submit" className="auth-submit-btn" disabled={loading}>
+            {loading ? 'Processing…' : (isLogin ? 'Log in' : 'Sign up')}
+          </button>
+        </form>
+
+        <p className="auth-toggle-text">
+          {isLogin ? "Don't have an account?" : "Already have an account?"}
+          <span className="auth-toggle-link" onClick={() => { setIsLogin(!isLogin); setError(''); }}>
+            {isLogin ? 'Sign up' : 'Log in'}
+          </span>
+        </p>
+      </div>
+    </div>
+  );
+}
 
 /* ── Avatar colour helper ─────────────────────────────────── */
 const AVATAR_COLORS = ['#1d9bf0','#ff7a00','#f91880','#00ba7c','#794bc4','#ff6f61','#ffd400','#17becf'];
@@ -207,7 +295,10 @@ function ComposeBox({ userName, onPostCreated, liveTags }) {
 }
 
 /* ── Left Navigation ──────────────────────────────────────── */
-function LeftNav({ userName, onUserNameChange, activeTab, onNavClick }) {
+function LeftNav({ currentUser, activeTab, onNavClick, onLogout }) {
+  const userName = currentUser?.username || 'you';
+  const name = currentUser?.name || 'Set your handle';
+
   return (
     <nav className="left-nav">
       <div className="nav-logo">
@@ -236,21 +327,22 @@ function LeftNav({ userName, onUserNameChange, activeTab, onNavClick }) {
         ))}
       </div>
       <button className="post-nav-btn">Post</button>
-      <div className="nav-profile" style={{ marginTop: 16 }}>
-        <Avatar name={userName || 'you'} size={40} />
+      
+      <div className="nav-profile" style={{ marginTop: 'auto', marginBottom: 16 }}>
+        <Avatar name={userName} size={40} />
         <div className="nav-profile-info">
-          <div className="nav-profile-name">
-            {userName ? `@${userName}` : 'Set your handle'}
-          </div>
-          <input
-            className="nav-handle-input"
-            placeholder="your handle…"
-            value={userName}
-            onChange={e => onUserNameChange(e.target.value)}
-            maxLength={30}
-          />
+          <div className="nav-profile-name" style={{ fontWeight: 'bold' }}>{name}</div>
+          <div className="nav-profile-handle" style={{ fontSize: 13, color: '#71767b' }}>@{userName}</div>
         </div>
       </div>
+      
+      <button 
+        className="post-nav-btn" 
+        style={{ background: 'transparent', border: '1px solid #71767b', color: '#e7e9ea' }} 
+        onClick={onLogout}
+      >
+        Log out
+      </button>
     </nav>
   );
 }
@@ -292,7 +384,7 @@ function RightAside({ posts, trending, activeTag, onTagClick, searchQuery, onSea
     if (debouncedSearch.trim() !== (searchQuery || '')) {
       onSearch(debouncedSearch.trim());
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line
   }, [debouncedSearch]);
 
   return (
@@ -385,6 +477,12 @@ function RightAside({ posts, trending, activeTag, onTagClick, searchQuery, onSea
 
 /* ── Root App ─────────────────────────────────────────────── */
 export default function App() {
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('mb_user'));
+    } catch { return null; }
+  });
+
   const [posts, setPosts]         = useState([]);
   const [trending, setTrending]   = useState([]);
   const [loading, setLoading]     = useState(true);
@@ -394,13 +492,12 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [toastMessage, setToastMessage] = useState('');
   const [sseConnected, setSseConnected] = useState(false);
-  const [userName, setUserName]   = useState(
-    () => localStorage.getItem('mb_username') || ''
-  );
   const [likedPosts, setLikedPosts] = useState(() => {
     try { return JSON.parse(localStorage.getItem('mb_liked') || '[]'); }
     catch { return []; }
   });
+
+  const userName = currentUser?.username;
 
   const fetchPosts = useCallback(async (tag = activeTag, search = searchQuery) => {
     try {
@@ -497,9 +594,13 @@ export default function App() {
     loadFeed(null, q);
   };
 
-  const handleUserNameChange = (v) => {
-    setUserName(v);
-    localStorage.setItem('mb_username', v);
+  const handleLogout = () => {
+    localStorage.removeItem('mb_user');
+    setCurrentUser(null);
+    setPosts([]);
+    setActiveTab('home');
+    setSearchQuery(null);
+    setActiveTag(null);
   };
 
   const handleLiked = (postId) => {
@@ -508,6 +609,17 @@ export default function App() {
     localStorage.setItem('mb_liked', JSON.stringify(updated));
     fetchPosts(activeTag, searchQuery);
   };
+
+  if (!currentUser) {
+    return (
+      <AuthScreen 
+        onLoginSuccess={(user) => {
+          localStorage.setItem('mb_user', JSON.stringify(user));
+          setCurrentUser(user);
+        }}
+      />
+    );
+  }
 
   return (
     <div className="app-shell">
@@ -519,10 +631,10 @@ export default function App() {
       )}
 
       <LeftNav
-        userName={userName}
-        onUserNameChange={handleUserNameChange}
+        currentUser={currentUser}
         activeTab={activeTab}
         onNavClick={handleNavClick}
+        onLogout={handleLogout}
       />
 
       <main className="main-feed">

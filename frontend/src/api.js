@@ -21,4 +21,10 @@ export const likePost    = (postId, userName) =>
 export const getTrending = (limit = 10) =>
   API.get('/posts/trending-tags', { params: { limit } });
 
+export const registerUser = (name, username, password) =>
+  API.post('/auth/register', { name, username, password });
+
+export const loginUser = (username, password) =>
+  API.post('/auth/login', { username, password });
+
 export default API;

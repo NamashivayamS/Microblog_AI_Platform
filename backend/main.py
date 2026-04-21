@@ -4,7 +4,7 @@ from fastapi.responses import JSONResponse
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from rate_limiter import limiter
-from routers import posts
+from routers import posts, auth
 from database import engine
 import models
 import uvicorn
@@ -51,6 +51,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 # Pass limiter into posts router so it can decorate endpoints
 posts.router.limiter = limiter
 app.include_router(posts.router)
+app.include_router(auth.router)
 
 
 @app.get("/", tags=["health"])

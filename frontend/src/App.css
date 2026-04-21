@@ -1240,3 +1240,124 @@ body {
   background: #71767b;
   animation: none;
 }
+
+/* ══════════════════════════════════════════════════
+   AUTH SCREEN (Login / Register)
+══════════════════════════════════════════════════ */
+
+.auth-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: var(--bg);
+}
+
+.auth-box {
+  width: 100%;
+  max-width: 450px;
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  padding: 40px;
+  border: 1px solid var(--border);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.auth-logo {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 24px;
+}
+
+.auth-title {
+  font-size: 28px;
+  font-weight: 800;
+  margin-bottom: 8px;
+  color: var(--text);
+}
+
+.auth-subtitle {
+  font-size: 15px;
+  color: var(--text-dim);
+  margin-bottom: 32px;
+}
+
+.auth-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.auth-input {
+  width: 100%;
+  padding: 16px;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  color: var(--text);
+  font-size: 16px;
+  font-family: var(--font);
+  transition: all 0.2s var(--ease);
+}
+
+.auth-input:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 1px var(--blue);
+}
+
+.auth-submit-btn {
+  width: 100%;
+  padding: 16px;
+  border-radius: var(--radius-full);
+  background: var(--blue);
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  margin-top: 8px;
+  transition: background 0.2s;
+}
+
+.auth-submit-btn:hover {
+  background: #1a8cd8;
+}
+
+.auth-submit-btn:disabled {
+  background: #0e4f7a;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.auth-toggle-text {
+  margin-top: 24px;
+  color: var(--text-dim);
+  font-size: 14px;
+}
+
+.auth-toggle-link {
+  color: var(--blue);
+  cursor: pointer;
+  margin-left: 6px;
+  font-weight: 700;
+}
+
+.auth-toggle-link:hover {
+  text-decoration: underline;
+}
+
+.auth-error {
+  color: var(--pink);
+  background: var(--pink-dim);
+  padding: 12px;
+  border-radius: var(--radius);
+  width: 100%;
+  text-align: center;
+  font-size: 14px;
+  margin-bottom: 16px;
+}

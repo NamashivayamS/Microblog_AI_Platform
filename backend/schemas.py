@@ -29,6 +29,7 @@ class PostResponse(BaseModel):
     id: int
     content: str
     user_name: str
+    author_name: Optional[str] = None
     created_at: datetime
     likes_count: int
     tags: List[str] = []      # ← hashtags extracted from content
@@ -59,3 +60,30 @@ class TrendingTag(BaseModel):
 
 class ErrorResponse(BaseModel):
     detail: str
+
+
+class UserCreate(BaseModel):
+    name: str
+    username: str
+    password: str
+
+    @field_validator("username")
+    @classmethod
+    def username_valid(cls, v):
+        if not re.match(r"^[a-zA-Z0-9_.@-]+$", v):
+            raise ValueError("Username can only contain letters, numbers, and basic symbols (@, ., -, _)")
+        return v.lower()
+
+
+class UserLogin(BaseModel):
+    username: str
+    password: str
+
+
+class UserResponse(BaseModel):
+    id: int
+    name: str
+    username: str
+    created_at: datetime
+    
+    model_config = {"from_attributes": True}

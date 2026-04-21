@@ -1,13 +1,14 @@
 import re
 import asyncio
 import hashlib
+import bcrypt
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func, desc, or_
 from fastapi import HTTPException
 from cachetools import cached, TTLCache
-from models import MicroPost, Like, PostHashtag
-from schemas import PostCreate, LikeRequest
+from models import MicroPost, Like, PostHashtag, User
+from schemas import PostCreate, LikeRequest, UserCreate, UserLogin
 
 
 # ── Real-Time SSE Infrastructure ─────────────────────────────
@@ -42,10 +43,18 @@ def _extract_tags(content: str) -> list[str]:
 def _post_to_dict(db: Session, post: MicroPost) -> dict:
     likes_count = db.query(Like).filter(Like.post_id == post.id).count()
     tags = [ph.tag for ph in db.query(PostHashtag).filter(PostHashtag.post_id == post.id).all()]
+    author_name = None
+    
+    # Try looking up the actual display name of the user
+    user = db.query(User).filter(User.username == post.user_name).first()
+    if user:
+        author_name = user.name
+
     return {
         "id": post.id,
         "content": post.content,
         "user_name": post.user_name,
+        "author_name": author_name,
         "created_at": post.created_at,
         "likes_count": likes_count,
         "tags": tags,
@@ -147,3 +156,35 @@ def get_trending_tags(db: Session, limit: int = 10) -> list[dict]:
     )
 
     return [{"tag": row.tag, "count": row.count} for row in rows]
+
+# ── User Operations ──────────────────────────────────────────
+
+def create_user(db: Session, user: UserCreate) -> User:
+    # Check if username exists
+    existing = db.query(User).filter(User.username == user.username).first()
+    if existing:
+        raise HTTPException(status_code=400, detail="Username already registered")
+
+    # Hash password securely
+    salt = bcrypt.gensalt()
+    hashed_pw = bcrypt.hashpw(user.password.encode("utf-8"), salt).decode("utf-8")
+
+    db_user = User(
+        name=user.name,
+        username=user.username,
+        hashed_password=hashed_pw
+    )
+    db.add(db_user)
+    db.commit()
+    db.refresh(db_user)
+    return db_user
+
+def authenticate_user(db: Session, user: UserLogin) -> User:
+    db_user = db.query(User).filter(User.username == user.username).first()
+    if not db_user:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    
+    if not bcrypt.checkpw(user.password.encode("utf-8"), db_user.hashed_password.encode("utf-8")):
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    
+    return db_user
