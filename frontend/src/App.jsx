@@ -292,7 +292,8 @@ function RightAside({ posts, trending, activeTag, onTagClick, searchQuery, onSea
     if (debouncedSearch.trim() !== (searchQuery || '')) {
       onSearch(debouncedSearch.trim());
     }
-  }, [debouncedSearch, onSearch, searchQuery]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedSearch]);
 
   return (
     <aside className="right-aside">
