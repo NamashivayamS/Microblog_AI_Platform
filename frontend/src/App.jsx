@@ -212,11 +212,9 @@ function LeftNav({ userName, onUserNameChange, activeTab, onNavClick }) {
     <nav className="left-nav">
       <div className="nav-logo">
         <div className="nav-logo-icon">
-          <svg viewBox="0 0 24 24" width="28" height="28" fill="white">
-            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.746l7.73-8.835L1.254 2.25H8.08l4.265 5.638zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
-          </svg>
+          <img src="/logo.png" alt="Microblog Logo" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
         </div>
-        <span className="nav-logo-text">microblog</span>
+        <span className="nav-logo-text">Aumne</span>
       </div>
       <div className="nav-items">
         {[
@@ -457,7 +455,11 @@ export default function App() {
     if (id === 'home') {
       setActiveTag(null);
       setSearchQuery(null);
+      
+      // If we are already on home, setting state to null won't trigger useEffect.
+      // So forcefully fetch to avoid infinite loading state.
       setLoading(true);
+      fetchPosts(null, null);
     } else if (id === 'profile') {
       if (!userName.trim()) {
         showToast('Set your handle first to view profile!');
@@ -465,8 +467,12 @@ export default function App() {
         return;
       }
       setActiveTag(null);
-      setSearchQuery(userName.trim());
+      const query = userName.trim();
+      setSearchQuery(query);
+      
+      // Fetch specifically for the profile to avoid useEffect race conditions
       setLoading(true);
+      fetchPosts(null, query);
     } else {
       showToast('This feature will be available in the next release! 🚀');
       setTimeout(() => setActiveTab('home'), 500); // Revert selection
@@ -474,9 +480,11 @@ export default function App() {
   };
 
   const handleSearch = (query) => {
-    setSearchQuery(query || null);
+    const q = query || null;
+    setSearchQuery(q);
     setActiveTag(null);
     setLoading(true);
+    fetchPosts(null, q);
   };
 
   const handleUserNameChange = (v) => {
