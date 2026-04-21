@@ -214,7 +214,7 @@ function LeftNav({ userName, onUserNameChange, activeTab, onNavClick }) {
         <div className="nav-logo-icon">
           <img src="/logo.png" alt="Microblog Logo" style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '50%' }} />
         </div>
-        <span className="nav-logo-text">Aumne</span>
+        <span className="nav-logo-text">microblog</span>
       </div>
       <div className="nav-items">
         {[
@@ -450,41 +450,50 @@ export default function App() {
     setTimeout(() => setToastMessage(''), 3000);
   };
 
+  const loadFeed = async (tag, search) => {
+    setLoading(true);
+    try {
+      const [postsRes, trendRes] = await Promise.all([
+        getPosts(tag, search),
+        getTrending(10)
+      ]);
+      setPosts(postsRes.data);
+      setTrending(trendRes.data);
+      setError('');
+    } catch {
+      setError('Cannot reach server.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleNavClick = (id) => {
     setActiveTab(id);
     if (id === 'home') {
       setActiveTag(null);
       setSearchQuery(null);
-      
-      // If we are already on home, setting state to null won't trigger useEffect.
-      // So forcefully fetch to avoid infinite loading state.
-      setLoading(true);
-      fetchPosts(null, null);
+      loadFeed(null, null);
     } else if (id === 'profile') {
       if (!userName.trim()) {
         showToast('Set your handle first to view profile!');
         setActiveTab('home');
         return;
       }
-      setActiveTag(null);
       const query = userName.trim();
+      setActiveTag(null);
       setSearchQuery(query);
-      
-      // Fetch specifically for the profile to avoid useEffect race conditions
-      setLoading(true);
-      fetchPosts(null, query);
+      loadFeed(null, query);
     } else {
       showToast('This feature will be available in the next release! 🚀');
-      setTimeout(() => setActiveTab('home'), 500); // Revert selection
+      setTimeout(() => setActiveTab('home'), 500); 
     }
   };
 
   const handleSearch = (query) => {
     const q = query || null;
-    setSearchQuery(q);
     setActiveTag(null);
-    setLoading(true);
-    fetchPosts(null, q);
+    setSearchQuery(q);
+    loadFeed(null, q);
   };
 
   const handleUserNameChange = (v) => {
