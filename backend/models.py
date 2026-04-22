@@ -4,6 +4,7 @@ from sqlalchemy.sql import func
 from database import Base
 
 class User(Base):
+    """Core user table handling registered accounts and hashed passwords."""
     __tablename__ = "users"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -14,6 +15,7 @@ class User(Base):
 
 
 class MicroPost(Base):
+    """Main feed table. Holds individual text posts (max 280 chars logic enforced at API layer)."""
     __tablename__ = "micro_posts"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -21,12 +23,14 @@ class MicroPost(Base):
     user_name = Column(String, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
+    # Relationships map to our other tables with cascade deletion so orphaned data is wiped
     likes = relationship("Like", back_populates="post", cascade="all, delete-orphan")
     hashtags = relationship("PostHashtag", back_populates="post", cascade="all, delete-orphan")
     comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")
 
 
 class Comment(Base):
+    """Handles threaded replies directly under specific posts."""
     __tablename__ = "comments"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -39,6 +43,7 @@ class Comment(Base):
 
 
 class Like(Base):
+    """Tracks likes to ensure no one can double-vote. Uniqueness enforced by composite constraint."""
     __tablename__ = "likes"
 
     id = Column(Integer, primary_key=True, autoincrement=True)
@@ -47,6 +52,7 @@ class Like(Base):
 
     post = relationship("MicroPost", back_populates="likes")
 
+    # Prevent duplicate likes at the database engine level
     __table_args__ = (
         UniqueConstraint("post_id", "user_name", name="uq_like_post_user"),
     )
@@ -62,6 +68,7 @@ class PostHashtag(Base):
 
     post = relationship("MicroPost", back_populates="hashtags")
 
+    # Prevent duplicate tags on a single post and index the column for blazing fast search
     __table_args__ = (
         UniqueConstraint("post_id", "tag", name="uq_post_tag"),
         Index("ix_post_hashtags_tag", "tag"),

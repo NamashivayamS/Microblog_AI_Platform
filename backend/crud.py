@@ -15,7 +15,10 @@ from schemas import PostCreate, LikeRequest, UserCreate, UserLogin, CommentCreat
 SSE_CLIENTS = []
 
 async def notify_clients():
-    """To be called via BackgroundTasks when a mutation happens."""
+    """
+    To be called via BackgroundTasks when a mutation happens.
+    Pushes a lightweight 'update' string to all connected SSE clients.
+    """
     for q in SSE_CLIENTS:
         try:
             q.put_nowait("update")
@@ -23,7 +26,9 @@ async def notify_clients():
             pass
 
 def generate_state_hash(db: Session) -> str:
-    """Calculates an ETag representing global logical feed state."""
+    """Calculates an ETag representing global logical feed state.
+    We hash the max post ID, and counts of posts, likes, and comments. 
+    If this hash hasn't changed, the client can safely use their cached feed!"""
     max_id = db.query(func.max(MicroPost.id)).scalar() or 0
     total_posts = db.query(func.count(MicroPost.id)).scalar() or 0
     total_likes = db.query(func.count(Like.id)).scalar() or 0
@@ -33,6 +38,7 @@ def generate_state_hash(db: Session) -> str:
 
 # ── Internal helpers ─────────────────────────────────────────
 
+# Regex to safely pluck out alphanumeric hashtags (max 50 chars)
 HASHTAG_RE = re.compile(r'#([A-Za-z][A-Za-z0-9_]{0,49})')
 
 
@@ -42,6 +48,11 @@ def _extract_tags(content: str) -> list[str]:
 
 
 def _post_to_dict(db: Session, post: MicroPost) -> dict:
+    """
+    Central serializer. 
+    Maps the MicroPost model into our Pydantic PostResponse format, 
+    fetching aggregate likes and resolving real display names.
+    """
     likes_count = db.query(Like).filter(Like.post_id == post.id).count()
     tags = [ph.tag for ph in db.query(PostHashtag).filter(PostHashtag.post_id == post.id).all()]
     author_name = None
@@ -51,7 +62,7 @@ def _post_to_dict(db: Session, post: MicroPost) -> dict:
     if user:
         author_name = user.name
 
-    # Fetch comments
+    # Fetch and serialize nested comments
     db_comments = db.query(Comment).filter(Comment.post_id == post.id).order_by(Comment.id.asc()).all()
     comments = []
     for c in db_comments:
@@ -83,12 +94,13 @@ def _post_to_dict(db: Session, post: MicroPost) -> dict:
 # ── CRUD Operations ──────────────────────────────────────────
 
 def create_post(db: Session, post: PostCreate) -> dict:
+    # 1. Insert the main post record
     db_post = MicroPost(content=post.content, user_name=post.user_name)
     db.add(db_post)
     db.commit()
     db.refresh(db_post)
 
-    # Parse and store hashtags
+    # 2. Parse and store any hashtags associated with it
     tags = _extract_tags(post.content)
     for tag in tags:
         db.add(PostHashtag(post_id=db_post.id, tag=tag))
