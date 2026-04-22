@@ -15,6 +15,9 @@ export const getPosts    = (tag = null, search = null) => {
 export const createPost  = (content, userName) =>
   API.post('/posts/', { content, user_name: userName });
 
+export const createComment = (postId, content, userName) =>
+  API.post(`/posts/${postId}/comments`, { content, user_name: userName });
+
 export const likePost    = (postId, userName) =>
   API.post(`/posts/${postId}/like`, { user_name: userName });
 

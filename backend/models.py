@@ -23,6 +23,19 @@ class MicroPost(Base):
 
     likes = relationship("Like", back_populates="post", cascade="all, delete-orphan")
     hashtags = relationship("PostHashtag", back_populates="post", cascade="all, delete-orphan")
+    comments = relationship("Comment", back_populates="post", cascade="all, delete-orphan")
+
+
+class Comment(Base):
+    __tablename__ = "comments"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    post_id = Column(Integer, ForeignKey("micro_posts.id", ondelete="CASCADE"), nullable=False)
+    user_name = Column(String, nullable=False)
+    content = Column(String, nullable=False)
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    post = relationship("MicroPost", back_populates="comments")
 
 
 class Like(Base):

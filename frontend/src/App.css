@@ -1361,3 +1361,66 @@ body {
   font-size: 14px;
   margin-bottom: 16px;
 }
+
+/* ── Comments Section ───────────── */
+.comments-section {
+  margin-top: 15px;
+  padding-top: 15px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+.comment-item {
+  padding-left: 10px;
+  border-left: 2px solid rgba(255,255,255,0.1);
+}
+.comment-header {
+  font-size: 14px;
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.comment-handle, .comment-dot, .post-timestamp {
+  color: #71767b;
+}
+.comment-content {
+  font-size: 15px;
+  line-height: 1.4;
+}
+.comment-form {
+  display: flex;
+  gap: 10px;
+}
+.comment-form input {
+  flex: 1;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  color: #fff;
+  padding: 10px 15px;
+  border-radius: 20px;
+  font-family: inherit;
+  font-size: 15px;
+}
+.comment-form input:focus {
+  outline: none;
+  border-color: #1d9bf0;
+}
+.comment-form button {
+  background: #1d9bf0;
+  color: #fff;
+  border: none;
+  border-radius: 20px;
+  padding: 0 20px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+.comment-form button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

@@ -276,9 +276,6 @@ function ComposeBox({ userName, onPostCreated, liveTags }) {
 
           <div className="compose-toolbar">
             <div className="compose-tools">
-              {['🖼️','📊','😀','📅','📍'].map(icon => (
-                <button key={icon} className="compose-tool-btn" title={icon}>{icon}</button>
-              ))}
             </div>
             <div className="compose-actions">
               <CharRing value={content.length} max={MAX} />
@@ -410,7 +407,7 @@ function RightAside({ posts, trending, activeTag, onTagClick, searchQuery, onSea
 
       {/* Stats */}
       <div className="widget-card">
-        <div className="widget-title">📊 Stats</div>
+        <div className="widget-title">Stats</div>
         <div className="stats-grid">
           <div className="stat-item">
             <span className="stat-num">{posts.length}</span>
@@ -492,12 +489,23 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [toastMessage, setToastMessage] = useState('');
   const [sseConnected, setSseConnected] = useState(false);
-  const [likedPosts, setLikedPosts] = useState(() => {
-    try { return JSON.parse(localStorage.getItem('mb_liked') || '[]'); }
-    catch { return []; }
-  });
+  const [likedPosts, setLikedPosts] = useState([]);
 
   const userName = currentUser?.username;
+
+  // Sync liked posts when user changes
+  useEffect(() => {
+    if (userName) {
+      try {
+        const stored = JSON.parse(localStorage.getItem(`mb_liked_${userName}`) || '[]');
+        setLikedPosts(stored);
+      } catch {
+        setLikedPosts([]);
+      }
+    } else {
+      setLikedPosts([]);
+    }
+  }, [userName]);
 
   const fetchPosts = useCallback(async (tag = activeTag, search = searchQuery) => {
     try {
@@ -598,15 +606,18 @@ export default function App() {
     localStorage.removeItem('mb_user');
     setCurrentUser(null);
     setPosts([]);
+    setLikedPosts([]);
     setActiveTab('home');
     setSearchQuery(null);
     setActiveTag(null);
   };
 
   const handleLiked = (postId) => {
-    const updated = [...likedPosts, postId];
-    setLikedPosts(updated);
-    localStorage.setItem('mb_liked', JSON.stringify(updated));
+    setLikedPosts(prev => {
+      const updated = [...prev, postId];
+      if (userName) localStorage.setItem(`mb_liked_${userName}`, JSON.stringify(updated));
+      return updated;
+    });
     fetchPosts(activeTag, searchQuery);
   };
 

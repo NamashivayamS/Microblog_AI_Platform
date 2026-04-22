@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { likePost } from '../api';
+import { likePost, createComment } from '../api';
 import { Avatar } from '../App';
 
 function timeAgo(dateStr) {
@@ -52,6 +52,27 @@ export default function PostCard({ post, userName, alreadyLiked, onLiked, onTagC
   const [optimisticLikes, setOptimistic] = useState(null);
   const [localLiked, setLocalLiked]      = useState(alreadyLiked);
 
+  const [showComments, setShowComments] = useState(false);
+  const [commentContent, setCommentContent] = useState('');
+  const [commenting, setCommenting] = useState(false);
+
+  const handleCommentSubmit = async (e) => {
+    e.preventDefault();
+    if (!userName) return;
+    if (!commentContent.trim()) return;
+
+    setCommenting(true);
+    try {
+      await createComment(post.id, commentContent, userName);
+      setCommentContent('');
+      // No re-fetch needed! SSE will push the update to all clients automatically!
+    } catch (err) {
+      console.error("Comment failed:", err);
+    } finally {
+      setCommenting(false);
+    }
+  };
+
   const likesCount = optimisticLikes !== null ? optimisticLikes : post.likes_count;
 
   const handleLike = async () => {
@@ -78,14 +99,17 @@ export default function PostCard({ post, userName, alreadyLiked, onLiked, onTagC
     }
   };
 
+  const getFallbackName = (username) => {
+    if (!username) return 'Anonymous';
+    // Strip email domain and any numbers
+    let base = username.split('@')[0].replace(/[0-9]/g, '');
+    if (!base) base = username.split('@')[0];
+    return base.charAt(0).toUpperCase() + base.slice(1);
+  };
+
   const displayName = post.author_name 
     ? post.author_name 
-    : post.user_name
-      ? post.user_name.charAt(0).toUpperCase() + post.user_name.slice(1)
-      : 'Anonymous';
-
-  // Simulated view count (deterministic from post id)
-  const views = post.id * 47 + 12;
+    : getFallbackName(post.user_name);
 
   return (
     <article className="post-card">
@@ -118,17 +142,17 @@ export default function PostCard({ post, userName, alreadyLiked, onLiked, onTagC
         )}
 
         {/* Actions */}
-        <div className="post-actions">
+        <div className="post-actions" style={{ justifyContent: 'space-around', width: '100%' }}>
           {/* Reply */}
-          <button className="action-btn" title="Reply">
+          <button 
+            className="action-btn" 
+            title="Reply"
+            onClick={(e) => { e.stopPropagation(); setShowComments(!showComments); }}
+          >
             <span className="action-icon">💬</span>
-            <span className="action-count">0</span>
+            <span className="action-count">{post.comments?.length || 0}</span>
           </button>
-          {/* Repost */}
-          <button className="action-btn" title="Repost">
-            <span className="action-icon">🔁</span>
-            <span className="action-count">0</span>
-          </button>
+
           {/* Like */}
           <div style={{ position: 'relative' }}>
             <button
@@ -142,16 +166,70 @@ export default function PostCard({ post, userName, alreadyLiked, onLiked, onTagC
             </button>
             {likeError && <div className="like-error-tip">{likeError}</div>}
           </div>
-          {/* Views */}
-          <button className="action-btn" title="Views">
-            <span className="action-icon">📊</span>
-            <span className="action-count">{views}</span>
-          </button>
+
           {/* Share */}
-          <button className="action-btn" title="Share">
+          <button 
+            className="action-btn" 
+            title="Share"
+            onClick={async (e) => {
+              e.stopPropagation();
+              try {
+                if (navigator.share) {
+                  await navigator.share({
+                    title: `Post by ${displayName}`,
+                    text: post.content,
+                  });
+                } else {
+                  await navigator.clipboard.writeText(post.content);
+                  alert("Post text copied to clipboard!");
+                }
+              } catch (err) {
+                // Ignore DOMException errors (like user cancellation)
+              }
+            }}
+          >
             <span className="action-icon">↗</span>
           </button>
         </div>
+
+        {/* Nested Comments Section */}
+        {showComments && (
+          <div className="comments-section" onClick={(e) => e.stopPropagation()}>
+            <div className="comments-list">
+              {(post.comments || []).map(comment => (
+                <div key={comment.id} className="comment-item">
+                  <div className="comment-header">
+                    <strong>{comment.author_name || getFallbackName(comment.user_name)}</strong>
+                    <span className="comment-handle">@{comment.user_name}</span>
+                    <span className="comment-dot">·</span>
+                    <LiveTimeAgo dateStr={comment.created_at} />
+                  </div>
+                  <div className="comment-content">{comment.content}</div>
+                </div>
+              ))}
+            </div>
+            
+            {userName ? (
+              <form onSubmit={handleCommentSubmit} className="comment-form">
+                <input 
+                  type="text" 
+                  autoFocus
+                  placeholder="Post your reply"
+                  value={commentContent}
+                  onChange={e => setCommentContent(e.target.value)}
+                  disabled={commenting}
+                />
+                <button type="submit" disabled={!commentContent.trim() || commenting}>
+                  Reply
+                </button>
+              </form>
+            ) : (
+              <div style={{ fontSize: '13px', color: 'gray', padding: '10px 0', textAlign: 'center' }}>
+                Log in to join the conversation.
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </article>
   );

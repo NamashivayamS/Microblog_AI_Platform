@@ -25,6 +25,38 @@ class PostCreate(BaseModel):
         return v.strip()
 
 
+class CommentCreate(BaseModel):
+    content: str
+    user_name: str
+
+    @field_validator("content")
+    @classmethod
+    def content_must_not_be_empty(cls, v):
+        if not v or not v.strip():
+            raise ValueError("Comment content cannot be empty")
+        if len(v) > 280:
+            raise ValueError("Comment content exceeds 280 characters")
+        return v
+
+    @field_validator("user_name")
+    @classmethod
+    def username_must_not_be_empty(cls, v):
+        if not v or not v.strip():
+            raise ValueError("user_name cannot be empty")
+        return v.strip()
+
+
+class CommentResponse(BaseModel):
+    id: int
+    post_id: int
+    content: str
+    user_name: str
+    author_name: Optional[str] = None
+    created_at: datetime
+
+    model_config = {"from_attributes": True}
+
+
 class PostResponse(BaseModel):
     id: int
     content: str
@@ -33,6 +65,7 @@ class PostResponse(BaseModel):
     created_at: datetime
     likes_count: int
     tags: List[str] = []      # ← hashtags extracted from content
+    comments: List[CommentResponse] = []
 
     model_config = {"from_attributes": True}
 

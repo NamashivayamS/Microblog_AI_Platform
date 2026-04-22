@@ -1,7 +1,7 @@
 """
     Social Media Microblog API
 
-    A Twitter-like microblog API built with FastAPI and SQLite. Supports creating posts (max 280 chars) and liking posts (once per user).
+    A Twitter-like microblog API built with FastAPI and SQLite. Supports creating posts (max 280 chars) and liking posts (once per user). Includes real-time SSE feed, ETag conditional caching, and per-IP rate limiting.
 
     The version of the OpenAPI document: 1.0.0
     Contact: dev@microblog.com

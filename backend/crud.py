@@ -7,8 +7,8 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy import func, desc, or_
 from fastapi import HTTPException
 from cachetools import cached, TTLCache
-from models import MicroPost, Like, PostHashtag, User
-from schemas import PostCreate, LikeRequest, UserCreate, UserLogin
+from models import MicroPost, Like, PostHashtag, User, Comment
+from schemas import PostCreate, LikeRequest, UserCreate, UserLogin, CommentCreate
 
 
 # ── Real-Time SSE Infrastructure ─────────────────────────────
@@ -27,7 +27,8 @@ def generate_state_hash(db: Session) -> str:
     max_id = db.query(func.max(MicroPost.id)).scalar() or 0
     total_posts = db.query(func.count(MicroPost.id)).scalar() or 0
     total_likes = db.query(func.count(Like.id)).scalar() or 0
-    raw = f"{max_id}-{total_posts}-{total_likes}"
+    total_comments = db.query(func.count(Comment.id)).scalar() or 0
+    raw = f"{max_id}-{total_posts}-{total_likes}-{total_comments}"
     return hashlib.md5(raw.encode()).hexdigest()
 
 # ── Internal helpers ─────────────────────────────────────────
@@ -50,6 +51,23 @@ def _post_to_dict(db: Session, post: MicroPost) -> dict:
     if user:
         author_name = user.name
 
+    # Fetch comments
+    db_comments = db.query(Comment).filter(Comment.post_id == post.id).order_by(Comment.id.asc()).all()
+    comments = []
+    for c in db_comments:
+        c_author_name = None
+        c_user = db.query(User).filter(User.username == c.user_name).first()
+        if c_user:
+            c_author_name = c_user.name
+        comments.append({
+            "id": c.id,
+            "post_id": c.post_id,
+            "content": c.content,
+            "user_name": c.user_name,
+            "author_name": c_author_name,
+            "created_at": c.created_at
+        })
+
     return {
         "id": post.id,
         "content": post.content,
@@ -58,6 +76,7 @@ def _post_to_dict(db: Session, post: MicroPost) -> dict:
         "created_at": post.created_at,
         "likes_count": likes_count,
         "tags": tags,
+        "comments": comments,
     }
 
 
@@ -188,3 +207,20 @@ def authenticate_user(db: Session, user: UserLogin) -> User:
         raise HTTPException(status_code=401, detail="Invalid username or password")
     
     return db_user
+
+def create_comment(db: Session, post_id: int, comment: CommentCreate) -> dict:
+    post = db.query(MicroPost).filter(MicroPost.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="Post not found")
+        
+    db_comment = Comment(
+        post_id=post_id,
+        user_name=comment.user_name,
+        content=comment.content
+    )
+    db.add(db_comment)
+    db.commit()
+    db.refresh(db_comment)
+
+    # Return the updated post object which includes the new comment
+    return _post_to_dict(db, post)

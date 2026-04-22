@@ -4,11 +4,85 @@ All URIs are relative to *http://localhost*
 
 Method | HTTP request | Description
 ------------- | ------------- | -------------
+[**add_comment_posts_post_id_comments_post**](PostsApi.md#add_comment_posts_post_id_comments_post) | **POST** /posts/{post_id}/comments | Add a comment to a post
 [**create_post_posts_post**](PostsApi.md#create_post_posts_post) | **POST** /posts/ | Create a new post
 [**get_posts_posts_get**](PostsApi.md#get_posts_posts_get) | **GET** /posts/ | Get all posts
 [**like_post_posts_post_id_like_post**](PostsApi.md#like_post_posts_post_id_like_post) | **POST** /posts/{post_id}/like | Like a post
+[**sse_stream_posts_stream_get**](PostsApi.md#sse_stream_posts_stream_get) | **GET** /posts/stream | Server-Sent Events stream
 [**trending_tags_posts_trending_tags_get**](PostsApi.md#trending_tags_posts_trending_tags_get) | **GET** /posts/trending-tags | Get trending hashtags
 
+
+# **add_comment_posts_post_id_comments_post**
+> PostResponse add_comment_posts_post_id_comments_post(post_id, comment_create)
+
+Add a comment to a post
+
+Adds a comment and returns the updated post with all nested comments.
+
+### Example
+
+
+```python
+import microblog_sdk
+from microblog_sdk.models.comment_create import CommentCreate
+from microblog_sdk.models.post_response import PostResponse
+from microblog_sdk.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to http://localhost
+# See configuration.py for a list of all supported configuration parameters.
+configuration = microblog_sdk.Configuration(
+    host = "http://localhost"
+)
+
+
+# Enter a context with an instance of the API client
+with microblog_sdk.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = microblog_sdk.PostsApi(api_client)
+    post_id = 56 # int | 
+    comment_create = microblog_sdk.CommentCreate() # CommentCreate | 
+
+    try:
+        # Add a comment to a post
+        api_response = api_instance.add_comment_posts_post_id_comments_post(post_id, comment_create)
+        print("The response of PostsApi->add_comment_posts_post_id_comments_post:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling PostsApi->add_comment_posts_post_id_comments_post: %s\n" % e)
+```
+
+
+
+### Parameters
+
+
+Name | Type | Description  | Notes
+------------- | ------------- | ------------- | -------------
+ **post_id** | **int**|  | 
+ **comment_create** | [**CommentCreate**](CommentCreate.md)|  | 
+
+### Return type
+
+[**PostResponse**](PostResponse.md)
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: application/json
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
+**422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 
 # **create_post_posts_post**
 > PostResponse create_post_posts_post(post_create)
@@ -85,7 +159,7 @@ No authorization required
 
 Get all posts
 
-Retrieve posts ordered newest-first. Optionally filter by #hashtag via ?tag=
+Retrieve posts ordered newest-first. Supports ETag conditional caching, hashtag filtering, and full-text search.
 
 ### Example
 
@@ -224,6 +298,69 @@ No authorization required
 |-------------|-------------|------------------|
 **200** | Successful Response |  -  |
 **422** | Validation Error |  -  |
+
+[[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
+
+# **sse_stream_posts_stream_get**
+> object sse_stream_posts_stream_get()
+
+Server-Sent Events stream
+
+A persistent SSE connection. The server pushes a 'refresh' event when posts or likes change. Clients use this instead of polling.
+
+### Example
+
+
+```python
+import microblog_sdk
+from microblog_sdk.rest import ApiException
+from pprint import pprint
+
+# Defining the host is optional and defaults to http://localhost
+# See configuration.py for a list of all supported configuration parameters.
+configuration = microblog_sdk.Configuration(
+    host = "http://localhost"
+)
+
+
+# Enter a context with an instance of the API client
+with microblog_sdk.ApiClient(configuration) as api_client:
+    # Create an instance of the API class
+    api_instance = microblog_sdk.PostsApi(api_client)
+
+    try:
+        # Server-Sent Events stream
+        api_response = api_instance.sse_stream_posts_stream_get()
+        print("The response of PostsApi->sse_stream_posts_stream_get:\n")
+        pprint(api_response)
+    except Exception as e:
+        print("Exception when calling PostsApi->sse_stream_posts_stream_get: %s\n" % e)
+```
+
+
+
+### Parameters
+
+This endpoint does not need any parameter.
+
+### Return type
+
+**object**
+
+### Authorization
+
+No authorization required
+
+### HTTP request headers
+
+ - **Content-Type**: Not defined
+ - **Accept**: application/json
+
+### HTTP response details
+
+| Status code | Description | Response headers |
+|-------------|-------------|------------------|
+**200** | Successful Response |  -  |
 
 [[Back to top]](#) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to Model list]](../README.md#documentation-for-models) [[Back to README]](../README.md)
 

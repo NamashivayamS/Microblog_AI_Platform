@@ -1,4 +1,4 @@
-# PostResponse
+# CommentResponse
 
 
 ## Properties
@@ -6,30 +6,28 @@
 Name | Type | Description | Notes
 ------------ | ------------- | ------------- | -------------
 **id** | **int** |  | 
+**post_id** | **int** |  | 
 **content** | **str** |  | 
 **user_name** | **str** |  | 
 **author_name** | **str** |  | [optional] 
 **created_at** | **datetime** |  | 
-**likes_count** | **int** |  | 
-**tags** | **List[str]** |  | [optional] [default to []]
-**comments** | [**List[CommentResponse]**](CommentResponse.md) |  | [optional] [default to []]
 
 ## Example
 
 ```python
-from microblog_sdk.models.post_response import PostResponse
+from microblog_sdk.models.comment_response import CommentResponse
 
 # TODO update the JSON string below
 json = "{}"
-# create an instance of PostResponse from a JSON string
-post_response_instance = PostResponse.from_json(json)
+# create an instance of CommentResponse from a JSON string
+comment_response_instance = CommentResponse.from_json(json)
 # print the JSON string representation of the object
-print(PostResponse.to_json())
+print(CommentResponse.to_json())
 
 # convert the object into a dict
-post_response_dict = post_response_instance.to_dict()
-# create an instance of PostResponse from a dict
-post_response_from_dict = PostResponse.from_dict(post_response_dict)
+comment_response_dict = comment_response_instance.to_dict()
+# create an instance of CommentResponse from a dict
+comment_response_from_dict = CommentResponse.from_dict(comment_response_dict)
 ```
 [[Back to Model list]](../README.md#documentation-for-models) [[Back to API list]](../README.md#documentation-for-api-endpoints) [[Back to README]](../README.md)
 

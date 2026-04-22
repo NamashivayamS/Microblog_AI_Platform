@@ -5,7 +5,7 @@
 """
     Social Media Microblog API
 
-    A Twitter-like microblog API built with FastAPI and SQLite. Supports creating posts (max 280 chars) and liking posts (once per user).
+    A Twitter-like microblog API built with FastAPI and SQLite. Supports creating posts (max 280 chars) and liking posts (once per user). Includes real-time SSE feed, ETag conditional caching, and per-IP rate limiting.
 
     The version of the OpenAPI document: 1.0.0
     Contact: dev@microblog.com
@@ -19,8 +19,10 @@ __version__ = "1.0.0"
 
 # Define package exports
 __all__ = [
+    "AuthApi",
     "HealthApi",
     "PostsApi",
+    "RealtimeApi",
     "TagsApi",
     "ApiResponse",
     "ApiClient",
@@ -31,6 +33,8 @@ __all__ = [
     "ApiKeyError",
     "ApiAttributeError",
     "ApiException",
+    "CommentCreate",
+    "CommentResponse",
     "HTTPValidationError",
     "LikeRequest",
     "LikeResponse",
@@ -38,12 +42,17 @@ __all__ = [
     "PostCreate",
     "PostResponse",
     "TrendingTag",
+    "UserCreate",
+    "UserLogin",
+    "UserResponse",
     "ValidationError",
 ]
 
 # import apis into sdk package
+from microblog_sdk.api.auth_api import AuthApi as AuthApi
 from microblog_sdk.api.health_api import HealthApi as HealthApi
 from microblog_sdk.api.posts_api import PostsApi as PostsApi
+from microblog_sdk.api.realtime_api import RealtimeApi as RealtimeApi
 from microblog_sdk.api.tags_api import TagsApi as TagsApi
 
 # import ApiClient
@@ -58,6 +67,8 @@ from microblog_sdk.exceptions import ApiAttributeError as ApiAttributeError
 from microblog_sdk.exceptions import ApiException as ApiException
 
 # import models into sdk package
+from microblog_sdk.models.comment_create import CommentCreate as CommentCreate
+from microblog_sdk.models.comment_response import CommentResponse as CommentResponse
 from microblog_sdk.models.http_validation_error import HTTPValidationError as HTTPValidationError
 from microblog_sdk.models.like_request import LikeRequest as LikeRequest
 from microblog_sdk.models.like_response import LikeResponse as LikeResponse
@@ -65,5 +76,8 @@ from microblog_sdk.models.location_inner import LocationInner as LocationInner
 from microblog_sdk.models.post_create import PostCreate as PostCreate
 from microblog_sdk.models.post_response import PostResponse as PostResponse
 from microblog_sdk.models.trending_tag import TrendingTag as TrendingTag
+from microblog_sdk.models.user_create import UserCreate as UserCreate
+from microblog_sdk.models.user_login import UserLogin as UserLogin
+from microblog_sdk.models.user_response import UserResponse as UserResponse
 from microblog_sdk.models.validation_error import ValidationError as ValidationError
 

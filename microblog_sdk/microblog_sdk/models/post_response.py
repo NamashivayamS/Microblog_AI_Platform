@@ -3,7 +3,7 @@
 """
     Social Media Microblog API
 
-    A Twitter-like microblog API built with FastAPI and SQLite. Supports creating posts (max 280 chars) and liking posts (once per user).
+    A Twitter-like microblog API built with FastAPI and SQLite. Supports creating posts (max 280 chars) and liking posts (once per user). Includes real-time SSE feed, ETag conditional caching, and per-IP rate limiting.
 
     The version of the OpenAPI document: 1.0.0
     Contact: dev@microblog.com
@@ -21,6 +21,7 @@ import json
 from datetime import datetime
 from pydantic import BaseModel, ConfigDict, StrictInt, StrictStr
 from typing import Any, ClassVar, Dict, List, Optional
+from microblog_sdk.models.comment_response import CommentResponse
 from typing import Optional, Set
 from typing_extensions import Self
 from pydantic_core import to_jsonable_python
@@ -32,10 +33,12 @@ class PostResponse(BaseModel):
     id: StrictInt
     content: StrictStr
     user_name: StrictStr
+    author_name: Optional[StrictStr] = None
     created_at: datetime
     likes_count: StrictInt
     tags: Optional[List[StrictStr]] = None
-    __properties: ClassVar[List[str]] = ["id", "content", "user_name", "created_at", "likes_count", "tags"]
+    comments: Optional[List[CommentResponse]] = None
+    __properties: ClassVar[List[str]] = ["id", "content", "user_name", "author_name", "created_at", "likes_count", "tags", "comments"]
 
     model_config = ConfigDict(
         validate_by_name=True,
@@ -76,6 +79,18 @@ class PostResponse(BaseModel):
             exclude=excluded_fields,
             exclude_none=True,
         )
+        # override the default output from pydantic by calling `to_dict()` of each item in comments (list)
+        _items = []
+        if self.comments:
+            for _item_comments in self.comments:
+                if _item_comments:
+                    _items.append(_item_comments.to_dict())
+            _dict['comments'] = _items
+        # set to None if author_name (nullable) is None
+        # and model_fields_set contains the field
+        if self.author_name is None and "author_name" in self.model_fields_set:
+            _dict['author_name'] = None
+
         return _dict
 
     @classmethod
@@ -91,9 +106,11 @@ class PostResponse(BaseModel):
             "id": obj.get("id"),
             "content": obj.get("content"),
             "user_name": obj.get("user_name"),
+            "author_name": obj.get("author_name"),
             "created_at": obj.get("created_at"),
             "likes_count": obj.get("likes_count"),
-            "tags": obj.get("tags")
+            "tags": obj.get("tags"),
+            "comments": [CommentResponse.from_dict(_item) for _item in obj["comments"]] if obj.get("comments") is not None else None
         })
         return _obj
 

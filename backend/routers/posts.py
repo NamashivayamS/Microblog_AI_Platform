@@ -4,7 +4,7 @@ from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from database import get_db
-from schemas import PostCreate, PostResponse, LikeRequest, LikeResponse, TrendingTag
+from schemas import PostCreate, PostResponse, LikeRequest, LikeResponse, TrendingTag, CommentCreate
 import crud
 
 router = APIRouter(prefix="/posts", tags=["posts"])
@@ -82,6 +82,25 @@ def like_post(
     db: Session = Depends(get_db),
 ):
     result = crud.like_post(db=db, post_id=post_id, like=like)
+    background_tasks.add_task(crud.notify_clients)
+    return result
+
+
+@router.post(
+    "/{post_id}/comments",
+    response_model=PostResponse,
+    summary="Add a comment to a post",
+    description="Adds a comment and returns the updated post with all nested comments.",
+)
+@limiter.limit("20/minute", error_message="Too many comments. Please slow down.")
+def add_comment(
+    request: Request,
+    post_id: int,
+    comment: CommentCreate,
+    background_tasks: BackgroundTasks,
+    db: Session = Depends(get_db),
+):
+    result = crud.create_comment(db=db, post_id=post_id, comment=comment)
     background_tasks.add_task(crud.notify_clients)
     return result
 
