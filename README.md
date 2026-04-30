@@ -2,29 +2,29 @@
   <img src="assets/logo.png" alt="Microblog Logo" width="200" />
 </div>
 
-# 🐦 Aumne Microblog: Next-Gen Social Platform
+# Aumne Microblog: Next-Gen Social Platform
 
 Microblog is a high-performance, Twitter-like social media platform built to demonstrate **Senior-level engineering practices**. While fulfilling all baseline requirements (FastAPI, ReactJS, SQLite, OpenAPI SDK), this project implements production-ready architecture designed to scale.
 
 
 ---
 
-## 🏗️ Architecture & Engineering Highlights
+## Architecture & Engineering Highlights
 
 This is not a standard CRUD application. This platform has been fortified with advanced architectural patterns typically found in large-scale distributed systems:
 
-- **⚡ True Real-Time Push (SSE)**: Replaced naive 5-second HTTP polling with native **Server-Sent Events**. The `asyncio` backend holds connections open natively and pushes lightweight events to the React UI the millisecond a post or like occurs.
-- **🛡️ API Rate Limiting (`slowapi`)**: Protects the platform from abuse. 
+- ** True Real-Time Push (SSE)**: Replaced naive 5-second HTTP polling with native **Server-Sent Events**. The `asyncio` backend holds connections open natively and pushes lightweight events to the React UI the millisecond a post or like occurs.
+- ** API Rate Limiting (`slowapi`)**: Protects the platform from abuse. 
   - `POST /posts/` -> Max 10 per minute per IP
   - `POST /posts/{id}/like` -> Max 30 per minute per IP
   - `GET /posts/` -> Max 60 per minute per IP
-- **📦 HTTP ETag Caching**: The backend computes a global state hash. When clients request data they already have, the server yields a `304 Not Modified`, saving 100% of the JSON payload bandwidth.
-- **🚀 In-Memory TTL Query Caching**: Database-heavy aggregations (like Trending Tags) are globally cached using `cachetools` for 5-second intervals, entirely eliminating DB overload during high-traffic spikes.
-- **💨 Asynchronous Broadcasting**: Global state aggregation and SSE client notifications are completely decoupled from request latency using FastAPI `BackgroundTasks`.
+- ** HTTP ETag Caching**: The backend computes a global state hash. When clients request data they already have, the server yields a `304 Not Modified`, saving 100% of the JSON payload bandwidth.
+- ** In-Memory TTL Query Caching**: Database-heavy aggregations (like Trending Tags) are globally cached using `cachetools` for 5-second intervals, entirely eliminating DB overload during high-traffic spikes.
+- ** Asynchronous Broadcasting**: Global state aggregation and SSE client notifications are completely decoupled from request latency using FastAPI `BackgroundTasks`.
 
 ---
 
-## 🛠️ Technology Stack
+##  Technology Stack
 
 | Layer | Technology |
 |---|---|
@@ -36,7 +36,7 @@ This is not a standard CRUD application. This platform has been fortified with a
 
 ---
 
-## 🚀 Quick Start (Windows)
+##  Quick Start (Windows)
 
 All setup is fully automated.
 
@@ -53,7 +53,7 @@ REM 2. Start the FastAPI backend and React frontend
 
 ---
 
-## 🧠 Trick Logic & Enforced Rules
+##  Trick Logic & Enforced Rules
 
 1. **280-character limit**: Enforced securely via Pydantic model validation on the API edge.
 2. **One Like Per User**: Enforced via a composite `UNIQUE(post_id, user_name)` constraint in the SQLite database, preventing duplicate likes even in multi-threaded race conditions.
@@ -61,7 +61,7 @@ REM 2. Start the FastAPI backend and React frontend
 
 ---
 
-## 🧪 Testing
+##  Testing
 
 The backend includes a comprehensive test suite covering standard flows, boundary logic (281 chars), rate limit bypasses, and constraint integrity check.
 
@@ -73,7 +73,7 @@ python -m pytest tests/ -v
 
 ---
 
-## 📦 Python SDK Generation & Demo
+##  Python SDK Generation & Demo
 
 The CLI SDK is entirely auto-generated from the live OpenAPI specification.
 
@@ -93,7 +93,7 @@ python sdk_demo.py
 
 ---
 
-## 🗺️ System Diagram
+##  System Diagram
 
 ```mermaid
 sequenceDiagram
